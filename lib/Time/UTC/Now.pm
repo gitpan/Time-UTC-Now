@@ -51,7 +51,7 @@ use Module::Runtime 0.001 qw(use_module);
 use Time::Unix 1.02 ();
 use XSLoader;
 
-our $VERSION = "0.000";
+our $VERSION = "0.001";
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(now_utc_rat now_utc_sna now_utc_flt);
