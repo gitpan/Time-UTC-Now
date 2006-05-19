@@ -1,3 +1,11 @@
+version 0.002; 2006-05-19
+
+  * add the utc_day_to_cjdn() function, duplicated from Time::UTC, to
+    avoid the need to use that module in order to process the output of
+    this one
+
+  * documentation tweaks for clarity
+
 version 0.001; 2006-05-17
 
   * bugfix: Unix epoch was wrong in the code, making all returned values

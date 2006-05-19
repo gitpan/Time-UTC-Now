@@ -7,4 +7,5 @@ README
 Now.xs
 lib/Time/UTC/Now.pm
 ppport.h
+t/cjdn.t
 t/use.t

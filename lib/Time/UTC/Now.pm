@@ -13,6 +13,10 @@ Time::UTC::Now - determine current time in UTC correctly
 	($day, $secs, $bound) = now_utc_flt;
 	($day, $secs, $bound) = now_utc_flt(1);
 
+	use Time::UTC::Now qw(utc_day_to_cjdn);
+
+	$cjdn = utc_day_to_cjdn($day);
+
 =head1 DESCRIPTION
 
 This module is one answer to the question "what time is it?".
@@ -20,8 +24,6 @@ It determines the current time on the UTC scale, handling leap seconds
 correctly, and puts a bound on how inaccurate it could be.  It is the
 rigorously correct approach to determining civil time.  It is designed to
 interoperate with L<Time::UTC>, which knows all about the UTC time scale.
-
-=head1 STRUCTURE OF UTC
 
 UTC is a time scale derived from International Atomic Time (TAI).
 UTC divides time up into days, and each day into seconds.  The seconds
@@ -32,13 +34,15 @@ the UTC day approximately synchronised with the non-uniform rotation
 of the Earth.  (Prior to 1972 a different mechanism was used for UTC,
 but that's not an issue here.)
 
-Because UTC days have differing lengths, instants on the UTC scale are
-identified by the combination of a day number and a number of seconds
-since midnight within the day.  The day number is the integral number
-of days since 1958-01-01, which is the epoch of the TAI scale which
-underlies UTC.  This convention is used for interoperability with the
-C<Time::UTC> module.  See that module for functions to format these
-numbers for display.
+Because UTC days have differing lengths, instants on the UTC scale
+are identified here by the combination of a day number and a number
+of seconds since midnight within the day.  In this module the day
+number is the integral number of days since 1958-01-01, which is the
+epoch of the TAI scale which underlies UTC.  This is the convention
+used by the C<Time::UTC> module.  That module has some functions to
+format these numbers for display.  For a more general solution, use the
+C<utc_day_to_cjdn> function to translate to a standard Chronological
+Julian Day Number, which can be used as input to a calendar module.
 
 =cut
 
@@ -51,10 +55,10 @@ use Module::Runtime 0.001 qw(use_module);
 use Time::Unix 1.02 ();
 use XSLoader;
 
-our $VERSION = "0.001";
+our $VERSION = "0.002";
 
 use base qw(Exporter);
-our @EXPORT_OK = qw(now_utc_rat now_utc_sna now_utc_flt);
+our @EXPORT_OK = qw(now_utc_rat now_utc_sna now_utc_flt utc_day_to_cjdn);
 
 XSLoader::load("Time::UTC::Now", $VERSION);
 
@@ -65,15 +69,22 @@ XSLoader::load("Time::UTC::Now", $VERSION);
 =item now_utc_rat[(DEMAND_ACCURACY)]
 
 Returns a list of three values.  The first two values identify a current
-UTC instant, in the form of a day number and a number of seconds since
-midnight within the day.  The third value is an inaccuracy bound, as a
-number of seconds, or C<undef> if no accurate answer could be determined.
+UTC instant, in the form of a day number (number of days since the TAI
+epoch) and a number of seconds since midnight within the day.  The third
+value is an inaccuracy bound, as a number of seconds, or C<undef> if no
+accurate answer could be determined.
 
 If an inaccuracy bound is returned then this function is claiming to
 have answered correctly, to within the specified margin.  That is, some
 instant during the execution of C<now_utc> is within the specified margin
 of the instant identified.  (This semantic differs from older current-time
 interfaces that are content to return an instant that has already passed.)
+
+The inaccuracy bound is measured in UTC seconds; that is, in SI seconds
+on the Terran geoid as realised by atomic clocks.  This differs from SI
+seconds at the computer's location, but the difference is only apparent
+if the computer hardware is significantly time dilated with respect to
+the geoid.
 
 If C<undef> is returned instead of an inaccuracy bound then this function
 could not find a trustable answer.  Either the clock available was
@@ -170,6 +181,23 @@ sub now_utc_flt(;$) {
 		defined($ubound) ? $ubound/1000000.0 + 1.5e-11 : undef);
 }
 
+=item utc_day_to_cjdn(DAY)
+
+This function takes a number of days since the TAI epoch and returns
+the corresponding Chronological Julian Day Number (a number of days
+since -4713-11-24).  CJDN is a standard day numbering that is useful as
+an interchange format between implementations of different calendars.
+There is no bound on the permissible day numbers.
+
+=cut
+
+use constant _TAI_EPOCH_CJDN => 2436205;
+
+sub utc_day_to_cjdn($) {
+	my($day) = @_;
+	return _TAI_EPOCH_CJDN + $day;
+}
+
 =back
 
 =head1 TECHNIQUES
@@ -197,7 +225,7 @@ Resolution 1 us.
 
 Misbehaves around leap seconds, and does not give an inaccuracy bound.
 Resolution 1 s.  The C<Time::Unix> module corrects for the varying epochs
-of C<time()> across OSes.
+of C<time()> across OSes; native C<time()> is not a suitable fallback.
 
 =back
 
