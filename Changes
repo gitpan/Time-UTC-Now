@@ -1,3 +1,23 @@
+version 0.003; 2006-06-29
+
+  * use ntp_gettime() in addition to ntp_adjtime() on systems where
+    struct timex does not include the `time' member (the current time):
+    this situation has been seen on FreeBSD 5.4 and Solaris 10, and
+    prevented compilation of the previous version
+
+  * zero out entire timex structure before ntp_adjtime(), not just the
+    `modes' member, for the benefit of systems that check validity of
+    unused control variables: this problem caused fallback to
+    gettimeofday() on affected systems
+
+  * include XSLoader in dependency list in Makefile.PL
+
+  * various documentation clarifications
+
+  * discuss overflow of day number for now_utc_sna()
+
+  * add Time::TAI::Now to "see also" list
+
 version 0.002; 2006-05-19
 
   * add the utc_day_to_cjdn() function, duplicated from Time::UTC, to

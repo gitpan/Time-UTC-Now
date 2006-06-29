@@ -22,6 +22,9 @@ my $defs = "";
 $defs .= " -DQUSE_NTP_ADJTIME"
 	if compile_and_link_ok(["sys/timex.h"],
 		"struct timex tx; int st; st = ntp_adjtime(&tx);");
+$defs .= " -DQHAVE_STRUCT_TIMEX_TIME"
+	if compile_and_link_ok(["sys/timex.h"],
+		"struct timex tx; tx.time.tv_sec = 0; return tx.time.tv_sec;");
 $defs .= " -DQUSE_GETTIMEOFDAY"
 	if compile_and_link_ok(["sys/time.h"],
 		"struct timeval tv; int st; st = gettimeofday(&tv, NULL);");
@@ -30,9 +33,10 @@ WriteMakefile(
 	NAME => "Time::UTC::Now",
 	VERSION_FROM => "lib/Time/UTC/Now.pm",
 	PREREQ_PM => {
-		"Math::BigRat" => "0.02",
-		"Module::Runtime" => "0.001",
-		"Time::Unix" => "1.02",
+		Math::BigRat => "0.02",
+		Module::Runtime => "0.001",
+		Time::Unix => "1.02",
+		XSLoader => undef,
 	},
 	DEFINE => $defs,
 	clean => { FILES => "conftest*" },

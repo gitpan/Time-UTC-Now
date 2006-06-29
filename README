@@ -10,14 +10,14 @@ correctly, and puts a bound on how inaccurate it could be.  It is the
 rigorously correct approach to determining civil time.  It is designed
 to interoperate with Time::UTC, which knows all about the UTC time scale.
 
-UTC is a time scale derived from International Atomic Time (TAI).
-UTC divides time up into days, and each day into seconds.  The seconds
-are atomically-realised SI seconds, of uniform length.  Most UTC days
-are exactly 86400 seconds long, but occasionally there is a day of length
-86401 s or (theoretically) 86399 s.  These leap seconds are used to keep
-the UTC day approximately synchronised with the non-uniform rotation
-of the Earth.  (Prior to 1972 a different mechanism was used for UTC,
-but that's not an issue here.)
+UTC (Coordinated Universal Time) is a time scale derived from
+International Atomic Time (TAI).  UTC divides time up into days, and
+each day into seconds.  The seconds are atomically-realised SI seconds,
+of uniform length.  Most UTC days are exactly 86400 seconds long,
+but occasionally there is a day of length 86401 s or (theoretically)
+86399 s.  These leap seconds are used to keep the UTC day approximately
+synchronised with the non-uniform rotation of the Earth.  (Prior to 1972
+a different mechanism was used for UTC, but that's not an issue here.)
 
 Because UTC days have differing lengths, instants on the UTC scale
 are identified here by the combination of a day number and a number of

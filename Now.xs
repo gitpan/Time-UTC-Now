@@ -40,6 +40,12 @@ INIT:
 #ifdef QUSE_NTP_ADJTIME
 	struct timex tx;
 	long dayno;
+# ifdef QHAVE_STRUCT_TIMEX_TIME
+#  define ntv tx
+# else /* !QHAVE_STRUCT_TIMEX_TIME */
+	struct ntptimeval ntv;
+	struct timex txx;
+# endif /* !QHAVE_STRUCT_TIMEX_TIME */
 #endif /* QUSE_NTP_ADJTIME */
 #ifdef QUSE_GETTIMEOFDAY
 	struct timeval tv;
@@ -50,13 +56,13 @@ PPCODE:
 	/*
 	 * ** trying ntp_adjtime() **
 	 *
-	 * The kernel variables returned by ntp_adjtime() don't necessarily
-	 * behave the way they're supposed to.  The variables we're
-	 * interested in are:
+	 * The kernel variables returned by ntp_adjtime() and ntp_gettime()
+	 * don't necessarily behave the way they're supposed to.  The
+	 * variables we're interested in are:
 	 *
-	 * tx.time       Unix time number, as seconds plus microseconds
+	 * ntv.time      Unix time number, as seconds plus microseconds
 	 * state         leap second state
-	 * tx.maxerror   alleged maximum possible error, in microseconds
+	 * ntv.maxerror  alleged maximum possible error, in microseconds
 	 * tx.offset     offset being applied to clock, in microsecods
 	 * tx.tolerance  possible inaccuracy of clock rate, in scaled ppm
 	 *
@@ -82,7 +88,7 @@ PPCODE:
 	 *
 	 * So to decode that all we have to do is recognise state TIME_OOP
 	 * as indicating 86400 s of the current day and otherwise split up
-	 * tx.time.tv_sec conventionally.  We wouldn't need to recognise
+	 * ntv.time.tv_sec conventionally.  We wouldn't need to recognise
 	 * the other leap second states.  Note that the second *before*
 	 * midnight is being repeated in the Unix time number, which is
 	 * contrary to POSIX, but this is standard behaviour for
@@ -129,14 +135,14 @@ PPCODE:
 	 * we're not claiming accuracy in that case anyway.
 	 *
 	 * The possible error in the clock value is supposedly in
-	 * tx.maxerror.  However, this has a couple of problems.  It is
+	 * ntv.maxerror.  However, this has a couple of problems.  It is
 	 * updated in chunks at intervals of 1 s, rather than keeping
 	 * step with the time, so it might not reflect the possible
 	 * inaccuracy developed in the last second.  We add on an
 	 * adjustment based on tx.tolerance to fix this.
 	 *
 	 * Also, according to my understanding of the ntpd source, it seems
-	 * that tx.maxerror is based on the time that the clock would show
+	 * that ntv.maxerror is based on the time that the clock would show
 	 * after the current offset adjustment is completed, not what it
 	 * currently shows.  (ntpd seems to completely ignore the fact that
 	 * the offset adjustment is not instantaneous!)  In principle we
@@ -154,14 +160,51 @@ PPCODE:
 	 * Timekeeping", 31 January 1996, <ftp://ftp.udel.edu/pub/people/
 	 * mills/memos/memo96b.ps>.
 	 */
-	tx.modes = 0;
+#ifdef QHAVE_STRUCT_TIMEX_TIME
+	Zero(&tx, 1, struct timex);
 	state = ntp_adjtime(&tx);
-	if(state == -1 || tx.time.tv_sec < 0 ||
+#else /* !QHAVE_STRUCT_TIMEX_TIME */
+	/*
+	 * ntp_adjtime() doesn't give us the actual current time, only the
+	 * auxiliary time variables.  (D'oh!)  We need a correlated set of
+	 * variables, so this is a problem.  We take the auxiliary
+	 * variables once, then proceed to get the time, and then get the
+	 * auxiliary variables again.  We work with the worst values from
+	 * the two sets of auxiliary variables.
+	 *
+	 * This can theoretically produce wrong results if the clock
+	 * state is adjusted (by ntpd) between our syscalls.  For example,
+	 * if we read a small tx.offset, then ntpd adjusts the clock by
+	 * initiating a larger offset and resets maxerror to be small,
+	 * then we read the time with a small maxerror, then the offset
+	 * ticks down, then we read the reduced tx.offset.  In that case
+	 * we'd never see a tx.offset value as large as that which truly
+	 * applies to the time value that we read.  The potential error
+	 * in this sort of case is quite small, fortunately.
+	 *
+	 * In case it's not clear from the above: memo to OS implementors:
+	 * please include the current time in struct timex, so that the
+	 * entire clock state can be acquired atomically and thus
+	 * coherently.
+	 */
+	Zero(&tx, 1, struct timex);
+	Zero(&txx, 1, struct timex);
+	if(ntp_adjtime(&tx) == -1)
+		goto no_ntp_adjtime;
+	state = ntp_gettime(&ntv);
+	if(ntp_adjtime(&txx) == -1)
+		goto no_ntp_adjtime;
+	if(txx.offset > tx.offset)
+		tx.offset = txx.offset;
+	if(txx.tolerance > tx.tolerance)
+		tx.tolerance = txx.tolerance;
+#endif /* !QHAVE_STRUCT_TIMEX_TIME */
+	if(state == -1 || ntv.time.tv_sec < 0 ||
 			(state == TIME_ERROR && demanding_accuracy))
 		goto no_ntp_adjtime;
 	EXTEND(SP, 4);
-	dayno = UNIX_EPOCH_DAYNO + tx.time.tv_sec / 86400;
-	secs = tx.time.tv_sec % 86400;
+	dayno = UNIX_EPOCH_DAYNO + ntv.time.tv_sec / 86400;
+	secs = ntv.time.tv_sec % 86400;
 	switch(state) {
 		case TIME_OK: case TIME_WAIT: {
 			/* no extra leap second processing required */
@@ -201,10 +244,10 @@ PPCODE:
 	}
 	PUSHs(sv_2mortal(newSViv(dayno)));
 	PUSHs(sv_2mortal(newSViv(secs)));
-	PUSHs(sv_2mortal(newSViv(tx.time.tv_usec * 1000)));
+	PUSHs(sv_2mortal(newSViv(ntv.time.tv_usec * 1000)));
 	if(state != TIME_ERROR) {
 		PUSHs(sv_2mortal(newSViv(
-			(tx.maxerror +
+			(ntv.maxerror +
 			 (tx.tolerance >> SHIFT_USEC) +
 			 (tx.offset < 0 ? -tx.offset : tx.offset) +
 			 1))));

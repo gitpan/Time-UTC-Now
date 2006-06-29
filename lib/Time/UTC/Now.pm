@@ -25,14 +25,14 @@ correctly, and puts a bound on how inaccurate it could be.  It is the
 rigorously correct approach to determining civil time.  It is designed to
 interoperate with L<Time::UTC>, which knows all about the UTC time scale.
 
-UTC is a time scale derived from International Atomic Time (TAI).
-UTC divides time up into days, and each day into seconds.  The seconds
-are atomically-realised SI seconds, of uniform length.  Most UTC days
-are exactly 86400 seconds long, but occasionally there is a day of length
-86401 s or (theoretically) 86399 s.  These leap seconds are used to keep
-the UTC day approximately synchronised with the non-uniform rotation
-of the Earth.  (Prior to 1972 a different mechanism was used for UTC,
-but that's not an issue here.)
+UTC (Coordinated Universal Time) is a time scale derived from
+International Atomic Time (TAI).  UTC divides time up into days, and
+each day into seconds.  The seconds are atomically-realised SI seconds,
+of uniform length.  Most UTC days are exactly 86400 seconds long,
+but occasionally there is a day of length 86401 s or (theoretically)
+86399 s.  These leap seconds are used to keep the UTC day approximately
+synchronised with the non-uniform rotation of the Earth.  (Prior to 1972
+a different mechanism was used for UTC, but that's not an issue here.)
 
 Because UTC days have differing lengths, instants on the UTC scale
 are identified here by the combination of a day number and a number
@@ -55,7 +55,7 @@ use Module::Runtime 0.001 qw(use_module);
 use Time::Unix 1.02 ();
 use XSLoader;
 
-our $VERSION = "0.002";
+our $VERSION = "0.003";
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(now_utc_rat now_utc_sna now_utc_flt utc_day_to_cjdn);
@@ -74,10 +74,10 @@ epoch) and a number of seconds since midnight within the day.  The third
 value is an inaccuracy bound, as a number of seconds, or C<undef> if no
 accurate answer could be determined.
 
-If an inaccuracy bound is returned then this function is claiming to
-have answered correctly, to within the specified margin.  That is, some
-instant during the execution of C<now_utc> is within the specified margin
-of the instant identified.  (This semantic differs from older current-time
+If an inaccuracy bound is returned then this function is claiming to have
+answered correctly, to within the specified margin.  That is, some instant
+during the execution of C<now_utc_rat> is within the specified margin of
+the instant identified.  (This semantic differs from older current-time
 interfaces that are content to return an instant that has already passed.)
 
 The inaccuracy bound is measured in UTC seconds; that is, in SI seconds
@@ -141,6 +141,15 @@ decimal output, but awkward to do arithmetic with.  Its resolution is
 adequate for the foreseeable future, but could in principle be obsoleted
 some day.
 
+It is presumed that native integer formats will grow fast enough to always
+represent the day number fully; if not, 31 bits will overflow late in
+the sixth megayear of the Common Era.  (Average day length by then is
+projected to be around 86520 s, posing more serious problems for UTC.)
+
+The inaccuracy bound describes the actual time represented in the
+return values, not an internal value that was rounded to generate the
+return values.
+
 =cut
 
 sub now_utc_sna(;$) {
@@ -156,11 +165,16 @@ sub now_utc_sna(;$) {
 
 =item now_utc_flt[(DEMAND_ACCURACY)]
 
-This performs exactly the same operation as C<now_utc_rat>, but
-returns all the results as Perl numbers (the day number as an integer).
-This form of return value is very efficient and easy to manipulate.
-However, its resolution is limited, rendering it obsolete in the near
-future unless floating point number formats get bigger.
+This performs exactly the same operation as C<now_utc_rat>, but returns
+all the results as Perl numbers (the day number as an integer, with the
+same caveat as for C<now_utc_sna>).  This form of return value is very
+efficient and easy to manipulate.  However, its resolution is limited,
+rendering it obsolete in the near future unless floating point number
+formats get bigger.
+
+The inaccuracy bound describes the actual time represented in the
+return values, not an internal value that was rounded to generate the
+return values.
 
 =cut
 
@@ -235,6 +249,7 @@ non-Unix operating systems.
 
 =head1 SEE ALSO
 
+L<Time::TAI::Now>,
 L<Time::UTC>
 
 =head1 AUTHOR
