@@ -51,11 +51,12 @@ package Time::UTC::Now;
 use warnings;
 use strict;
 
+use Data::Float 0.000 qw(significand_step mult_pow2);
 use Module::Runtime 0.001 qw(use_module);
 use Time::Unix 1.02 ();
 use XSLoader;
 
-our $VERSION = "0.003";
+our $VERSION = "0.004";
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(now_utc_rat now_utc_sna now_utc_flt utc_day_to_cjdn);
@@ -178,21 +179,26 @@ return values.
 
 =cut
 
+# The floating-point seconds value is inaccurate due to rounding for
+# binary representation.  (With the resolution currently possible (1 us),
+# the conversion to IEEE 754 double doesn't actually lose information,
+# but the value still isn't converted exactly.)  Not trusting rounding
+# to be correct, allow for 1 ulp of additional error, for values on the
+# order of 86400 (exponent +16).  This is added onto the uncertainty.
+#
+# Also add 1 ulp at 3600 (exponent +11) to cover rounding in conversion
+# of the uncertainty value itself.
+
+use constant ADDITIONAL_UNCERTAINTY =>
+		 mult_pow2(significand_step, +16) +
+		 mult_pow2(significand_step, +11);
+
 sub now_utc_flt(;$) {
 	my($dayno, $secs, $nsecs, $ubound) = _now_utc_internal($_[0]);
-	# The floating-point seconds value is inaccurate due to
-	# rounding for binary representation.  (With the resolution
-	# currently possible (1 us), the conversion doesn't actually
-	# lose information, but the value still isn't converted exactly.)
-	# Epsilon for values on the order of 86400 in a 52-bit significand
-	# is 2^-36, so if rounding is correct then the maximum possible
-	# additional error is 2^-37.  I don't trust the rounding to
-	# be correct, so declare an additional inaccuracy of 2^-36 s.
-	# This analysis assumes that the floating point format is IEEE
-	# 754 double or something similar.
 	return ($dayno,
 		$secs + $nsecs/1000000000.0,
-		defined($ubound) ? $ubound/1000000.0 + 1.5e-11 : undef);
+		defined($ubound) ? $ubound/1000000.0 + ADDITIONAL_UNCERTAINTY :
+			undef);
 }
 
 =item utc_day_to_cjdn(DAY)

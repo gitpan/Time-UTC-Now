@@ -1,3 +1,16 @@
+version 0.004; 2006-08-05
+
+  * in now_utc_flt(), allow for the rounding error in converting the
+    uncertainty value to floating point, as well as the rounding error
+    in converting the seconds value to floating point
+
+  * in now_utc_flt(), when allowing for the rounding error in converting
+    to floating point, use the actual parameters of the floating point
+    type (from Data::Float) instead of assuming IEEE 754 double
+
+  * use "=> 0" instead of "=> undef" in unversioned dependencies in
+    Makefile.PL
+
 version 0.003; 2006-06-29
 
   * use ntp_gettime() in addition to ntp_adjtime() on systems where

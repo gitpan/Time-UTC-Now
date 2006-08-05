@@ -33,10 +33,11 @@ WriteMakefile(
 	NAME => "Time::UTC::Now",
 	VERSION_FROM => "lib/Time/UTC/Now.pm",
 	PREREQ_PM => {
+		Data::Float => "0.000",
 		Math::BigRat => "0.02",
 		Module::Runtime => "0.001",
 		Time::Unix => "1.02",
-		XSLoader => undef,
+		XSLoader => 0,
 	},
 	DEFINE => $defs,
 	clean => { FILES => "conftest*" },
