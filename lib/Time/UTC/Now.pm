@@ -56,7 +56,7 @@ use Module::Runtime 0.001 qw(use_module);
 use Time::Unix 1.02 ();
 use XSLoader;
 
-our $VERSION = "0.004";
+our $VERSION = "0.005";
 
 use base qw(Exporter);
 our @EXPORT_OK = qw(now_utc_rat now_utc_sna now_utc_flt utc_day_to_cjdn);
@@ -228,13 +228,13 @@ best interface available when it runs.  It knows about the following:
 
 =over
 
-=item ntp_adjtime()
+=item ntp_adjtime(), ntp_gettime()
 
 Designed for precision timekeeping, this interface gives some leap
 second indications and an inaccuracy bound on the time it returns.
 Both are faulty in their raw form, but they are corrected by this module.
 (Those interested in the gory details are invited to read the source.)
-Resolution 1 us.
+Resolution 1 us, or on some systems 1 ns.
 
 =item gettimeofday()
 
@@ -253,6 +253,32 @@ The author would welcome patches to this module to make use of
 high-precision interfaces, along the lines of C<ntp_adjtime()>, on
 non-Unix operating systems.
 
+=head1 OS-SPECIFIC NOTES
+
+The author would appreciate reports of experiences with this module
+under OSes not listed in this section.
+
+=head2 Cygwin
+
+Uses gettimeofday(), which gives resolution 1 us but no uncertainty
+bound and is discontinuous at leap seconds.  There is no interface that
+supplies an uncertainty bound or correct leap second handling.
+
+=head2 FreeBSD
+
+Experimental code (new in version 0.005) uses the FreeBSD variation of
+ntp_gettime(), which gives resolution 1 us or 1 ns (depending on system
+configuration) and uncertainty bound.  Please report experiences with
+this code to the author.
+
+=head2 Linux
+
+Uses ntp_adjtime(), which gives resolution 1 us and uncertainty bound.
+
+=head2 Solaris
+
+Uses ntp_gettime(), which gives resolution 1 us and uncertainty bound.
+
 =head1 SEE ALSO
 
 L<Time::TAI::Now>,
@@ -264,7 +290,7 @@ Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006 Andrew Main (Zefram) <zefram@fysh.org>
+Copyright (C) 2006, 2007 Andrew Main (Zefram) <zefram@fysh.org>
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

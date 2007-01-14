@@ -1,3 +1,17 @@
+version 0.005; 2007-01-14
+
+  * handle FreeBSD variations of ntp_gettime() interface: use of struct
+    timespec instead of struct timeval; time may be returned with
+    nanosecond precision instead of microsecond; leap state returned
+    in time_state member of struct ntptimeval instead of return value
+    of ntp_gettime()
+
+  * in documentation, list OS-specific experiences (so far for Cygwin,
+    FreeBSD, Linux, and Solaris)
+
+  * when performing configuration tests in Makefile.PL, display the
+    content of the test as well as the compilation command line
+
 version 0.004; 2006-08-05
 
   * in now_utc_flt(), allow for the rounding error in converting the

@@ -17,6 +17,21 @@
 # ifndef SHIFT_USEC
 #  define SHIFT_USEC 16
 # endif
+/* time structures may be struct timeval or struct timespec */
+# ifdef QHAVE_STRUCT_TIMEX_TIME_TV_NSEC
+#  define TIMEX_SUBSEC tv_nsec
+# else
+#  define TIMEX_SUBSEC tv_usec
+# endif
+# ifdef QHAVE_STRUCT_NTPTIMEVAL_TIME_TV_NSEC
+#  define NTPTIMEVAL_SUBSEC tv_nsec
+# else
+#  define NTPTIMEVAL_SUBSEC tv_usec
+# endif
+/* this state flag might not exist */
+# ifndef STA_NANO
+#  define STA_NANO 0
+# endif
 #endif /* QUSE_NTP_ADJTIME */
 
 #ifdef QUSE_GETTIMEOFDAY
@@ -42,10 +57,17 @@ INIT:
 	long dayno;
 # ifdef QHAVE_STRUCT_TIMEX_TIME
 #  define ntv tx
+#  define NTV_SUBSEC TIMEX_SUBSEC
 # else /* !QHAVE_STRUCT_TIMEX_TIME */
 	struct ntptimeval ntv;
+#  define NTV_SUBSEC NTPTIMEVAL_SUBSEC
 	struct timex txx;
 # endif /* !QHAVE_STRUCT_TIMEX_TIME */
+# if defined(QHAVE_STRUCT_TIMEX_TIME) ? defined(QHAVE_STRUCT_TIMEX_TIME_STATE) : defined(QHAVE_STRUCT_NTPTIMEVAL_TIME_STATE)
+#  define leap_state ntv.time_state
+# else
+#  define leap_state state
+# endif
 #endif /* QUSE_NTP_ADJTIME */
 #ifdef QUSE_GETTIMEOFDAY
 	struct timeval tv;
@@ -61,7 +83,7 @@ PPCODE:
 	 * variables we're interested in are:
 	 *
 	 * ntv.time      Unix time number, as seconds plus microseconds
-	 * state         leap second state
+	 * leap_state    leap second state
 	 * ntv.maxerror  alleged maximum possible error, in microseconds
 	 * tx.offset     offset being applied to clock, in microsecods
 	 * tx.tolerance  possible inaccuracy of clock rate, in scaled ppm
@@ -124,15 +146,16 @@ PPCODE:
 	 *
 	 * There's another complication.  If the clock is in an
 	 * "unsynchronised" condition then ntp_adjtime() gives us the
-	 * error value TIME_ERROR in state, instead of the leap second state.
-	 * The leap second state machine still operates in this condition
-	 * (at least on Linux), we just can't see its state variable.
-	 * Annoyingly, we could have picked up the unsynchronised condition
-	 * (which we do care about) from the STA_UNSYNCH status flag
-	 * instead, so the leap state is being gratuitously squashed.  The
-	 * upshot is that we can't decode properly around leap seconds if
-	 * the clock is unsynchronised, but that's not a disaster because
-	 * we're not claiming accuracy in that case anyway.
+	 * error value TIME_ERROR in leap_state, instead of the leap
+	 * second state. The leap second state machine still operates
+	 * in this condition (at least on Linux), we just can't see
+	 * its state variable.  Annoyingly, we could have picked up the
+	 * unsynchronised condition (which we do care about) from the
+	 * STA_UNSYNCH status flag instead, so the leap state is being
+	 * gratuitously squashed.  The upshot is that we can't decode
+	 * properly around leap seconds if the clock is unsynchronised,
+	 * but that's not a disaster because we're not claiming accuracy
+	 * in that case anyway.
 	 *
 	 * The possible error in the clock value is supposedly in
 	 * ntv.maxerror.  However, this has a couple of problems.  It is
@@ -182,30 +205,40 @@ PPCODE:
 	 * applies to the time value that we read.  The potential error
 	 * in this sort of case is quite small, fortunately.
 	 *
+	 * We also need a consistent state of the STA_NANO flag, which is
+	 * only available from ntp_adjtime().  If it changes between the
+	 * two calls then we try again.  If it gets changed twice then we
+	 * could get a time value that is inconsistent with the flag state
+	 * that we consistently see.  There is no way to prevent this
+	 * happening.  Fortunately, it's even less likely than the
+	 * failure mode described in the previous paragraph.
+	 *
 	 * In case it's not clear from the above: memo to OS implementors:
 	 * please include the current time in struct timex, so that the
 	 * entire clock state can be acquired atomically and thus
 	 * coherently.
 	 */
-	Zero(&tx, 1, struct timex);
-	Zero(&txx, 1, struct timex);
-	if(ntp_adjtime(&tx) == -1)
-		goto no_ntp_adjtime;
-	state = ntp_gettime(&ntv);
-	if(ntp_adjtime(&txx) == -1)
-		goto no_ntp_adjtime;
+	do {
+		Zero(&tx, 1, struct timex);
+		Zero(&txx, 1, struct timex);
+		if(ntp_adjtime(&tx) == -1)
+			goto no_ntp_adjtime;
+		state = ntp_gettime(&ntv);
+		if(ntp_adjtime(&txx) == -1)
+			goto no_ntp_adjtime;
+	} while((tx.status & STA_NANO) != (txx.status & STA_NANO));
 	if(txx.offset > tx.offset)
 		tx.offset = txx.offset;
 	if(txx.tolerance > tx.tolerance)
 		tx.tolerance = txx.tolerance;
 #endif /* !QHAVE_STRUCT_TIMEX_TIME */
 	if(state == -1 || ntv.time.tv_sec < 0 ||
-			(state == TIME_ERROR && demanding_accuracy))
+			(leap_state == TIME_ERROR && demanding_accuracy))
 		goto no_ntp_adjtime;
 	EXTEND(SP, 4);
 	dayno = UNIX_EPOCH_DAYNO + ntv.time.tv_sec / 86400;
 	secs = ntv.time.tv_sec % 86400;
-	switch(state) {
+	switch(leap_state) {
 		case TIME_OK: case TIME_WAIT: {
 			/* no extra leap second processing required */
 		} break;
@@ -244,13 +277,16 @@ PPCODE:
 	}
 	PUSHs(sv_2mortal(newSViv(dayno)));
 	PUSHs(sv_2mortal(newSViv(secs)));
-	PUSHs(sv_2mortal(newSViv(ntv.time.tv_usec * 1000)));
-	if(state != TIME_ERROR) {
+	PUSHs(sv_2mortal(newSViv((tx.status & STA_NANO) ?
+					ntv.time.NTV_SUBSEC :
+					ntv.time.NTV_SUBSEC * 1000)));
+	if(leap_state != TIME_ERROR) {
+		long offset = tx.offset < 0 ? -tx.offset : tx.offset;
+		if(tx.status & STA_NANO) offset = (offset / 1000) + 1;
 		PUSHs(sv_2mortal(newSViv(
-			(ntv.maxerror +
-			 (tx.tolerance >> SHIFT_USEC) +
-			 (tx.offset < 0 ? -tx.offset : tx.offset) +
-			 1))));
+			ntv.maxerror +
+			(tx.tolerance >> SHIFT_USEC) +
+			offset + 1)));
 	} else {
 		PUSHs(&PL_sv_undef);
 	}

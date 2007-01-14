@@ -3,17 +3,17 @@ use ExtUtils::MakeMaker;
 
 sub compile_and_link_ok($$) {
 	my($hdrs, $code) = @_;
-	$hdrs = join("", map { "#include <$_>\n" } @$hdrs);
+	my $incs = join("", map { "#include <$_>\n" } @$hdrs);
 	open(TESTSRC, ">conftest.c") or die $!;
 	print TESTSRC "#include \"EXTERN.h\"\n".
 		"#include \"perl.h\"\n".
 		"#include \"XSUB.h\"\n".
 		"#include \"ppport.h\"\n".
-		$hdrs."int main(void) { $code }\n";
+		$incs."int main(void) { $code }\n";
 	close(TESTSRC);
 	my $cmd = "$Config{cc} $Config{ccflags} -I$Config{archlibexp}/CORE ".
 		"$Config{ldflags} -o conftest$Config{exe_ext} conftest.c";
-	print $cmd, "\n";
+	print "testing: ", (map { "<$_> " } @$hdrs), $code, "\n", $cmd, "\n";
 	return !system($cmd);
 }
 
@@ -25,6 +25,18 @@ $defs .= " -DQUSE_NTP_ADJTIME"
 $defs .= " -DQHAVE_STRUCT_TIMEX_TIME"
 	if compile_and_link_ok(["sys/timex.h"],
 		"struct timex tx; tx.time.tv_sec = 0; return tx.time.tv_sec;");
+$defs .= " -DQHAVE_STRUCT_TIMEX_TIME_TV_NSEC"
+	if compile_and_link_ok(["sys/timex.h"],
+		"struct timex tx; tx.time.tv_nsec = 0; return tx.time.tv_nsec;");
+$defs .= " -DQHAVE_STRUCT_TIMEX_TIME_STATE"
+	if compile_and_link_ok(["sys/timex.h"],
+		"struct timex tx; tx.time_state = 0; return tx.time_state;");
+$defs .= " -DQHAVE_STRUCT_NTPTIMEVAL_TIME_TV_NSEC"
+	if compile_and_link_ok(["sys/timex.h"],
+		"struct ntptimeval ntv; ntv.time.tv_nsec = 0; return ntv.time.tv_nsec;");
+$defs .= " -DQHAVE_STRUCT_NTPTIMEVAL_TIME_STATE"
+	if compile_and_link_ok(["sys/timex.h"],
+		"struct ntptimeval ntv; ntv.time_state = 0; return ntv.time_state;");
 $defs .= " -DQUSE_GETTIMEOFDAY"
 	if compile_and_link_ok(["sys/time.h"],
 		"struct timeval tv; int st; st = gettimeofday(&tv, NULL);");
