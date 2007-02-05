@@ -335,7 +335,7 @@ PPCODE:
 	EXTEND(SP, 3);
 	PUSHs(sv_2mortal(newSViv(UNIX_EPOCH_DAYNO + secs / 86400)));
 	PUSHs(sv_2mortal(newSViv(secs % 86400)));
-	PUSHs(sv_2mortal(newSViv(0)));
+	PUSHs(sv_2mortal(newSViv(500000000)));
 	goto done;
 	no_unix_time: ;
 	/*

@@ -8,4 +8,5 @@ Now.xs
 lib/Time/UTC/Now.pm
 ppport.h
 t/cjdn.t
+t/mjdn.t
 t/use.t

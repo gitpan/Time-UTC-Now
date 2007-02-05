@@ -1,3 +1,11 @@
+version 0.006; 2007-02-05
+
+  * add the utc_day_to_mjdn() function, duplicated from Time::UTC,
+    for interoperability with other code that deals with UT days
+
+  * when falling back on time(), add half a second onto its return value,
+    because it rounds down
+
 version 0.005; 2007-01-14
 
   * handle FreeBSD variations of ntp_gettime() interface: use of struct

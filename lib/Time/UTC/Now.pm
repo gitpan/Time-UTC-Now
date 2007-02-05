@@ -13,8 +13,9 @@ Time::UTC::Now - determine current time in UTC correctly
 	($day, $secs, $bound) = now_utc_flt;
 	($day, $secs, $bound) = now_utc_flt(1);
 
-	use Time::UTC::Now qw(utc_day_to_cjdn);
+	use Time::UTC::Now qw(utc_day_to_mjdn utc_day_to_cjdn);
 
+	$mjdn = utc_day_to_mjdn($day);
 	$cjdn = utc_day_to_cjdn($day);
 
 =head1 DESCRIPTION
@@ -40,9 +41,11 @@ of seconds since midnight within the day.  In this module the day
 number is the integral number of days since 1958-01-01, which is the
 epoch of the TAI scale which underlies UTC.  This is the convention
 used by the C<Time::UTC> module.  That module has some functions to
-format these numbers for display.  For a more general solution, use the
-C<utc_day_to_cjdn> function to translate to a standard Chronological
-Julian Day Number, which can be used as input to a calendar module.
+format these numbers for display.  For a more general solution, use
+the C<utc_day_to_mjdn> function to translate to a standard Modified
+Julian Day Number or the C<utc_day_to_cjdn> function to translate to a
+standard Chronological Julian Day Number, which can be used as input to
+a calendar module.
 
 =cut
 
@@ -56,10 +59,13 @@ use Module::Runtime 0.001 qw(use_module);
 use Time::Unix 1.02 ();
 use XSLoader;
 
-our $VERSION = "0.005";
+our $VERSION = "0.006";
 
 use base qw(Exporter);
-our @EXPORT_OK = qw(now_utc_rat now_utc_sna now_utc_flt utc_day_to_cjdn);
+our @EXPORT_OK = qw(
+	now_utc_rat now_utc_sna now_utc_flt
+	utc_day_to_mjdn utc_day_to_cjdn
+);
 
 XSLoader::load("Time::UTC::Now", $VERSION);
 
@@ -199,6 +205,22 @@ sub now_utc_flt(;$) {
 		$secs + $nsecs/1000000000.0,
 		defined($ubound) ? $ubound/1000000.0 + ADDITIONAL_UNCERTAINTY :
 			undef);
+}
+
+=item utc_day_to_mjdn(DAY)
+
+This function takes a number of days since the TAI epoch and returns
+the corresponding Modified Julian Day Number (a number of days since
+1858-11-17 UT).  MJDN is a standard numbering for days in Universal Time.
+There is no bound on the permissible day numbers.
+
+=cut
+
+use constant _TAI_EPOCH_MJDN => 36204;
+
+sub utc_day_to_mjdn($) {
+	my($day) = @_;
+	return _TAI_EPOCH_MJDN + $day;
 }
 
 =item utc_day_to_cjdn(DAY)
