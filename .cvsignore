@@ -1,6 +1,4 @@
-Makefile Makefile.old
-blib pm_to_blib
-META.yml
-conftest*
-Now.bs Now.c
+Build Makefile
+_build blib
+META.yml Makefile.PL SIGNATURE
 Time-UTC-Now-*

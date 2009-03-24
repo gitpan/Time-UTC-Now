@@ -1,3 +1,38 @@
+version 0.007; 2009-03-24
+
+  * bugfix: require bugfixed versions of Data::Float and Module::Runtime
+    (for $SIG{__DIE__} handling)
+
+  * use Win32 API GetSystemTimeAsFileTime() where available
+
+  * when dealing with the BSD nanosecond-resolution ntp_gettime(),
+    process the uncertainty bound with nanosecond resolution
+
+  * document the origin of each API that the module attempts to use
+
+  * separate code for different APIs into different C functions
+
+  * use typemap to simplify handling of Boolean argument
+
+  * much improved probe system
+
+  * don't use ppport.h, because it wasn't doing anything for perl v5.6+
+
+  * use simpler "parent" pragma in place of "base"
+
+  * build with Module::Build instead of ExtUtils::MakeMaker
+
+  * rearrange source tree to fit Module::Build convention
+
+  * test POD syntax and coverage, and make a small style change in
+    documentation to satisfy the coverage test
+
+  * complete dependency list
+
+  * include signature in distribution
+
+  * in documentation, separate "license" section from "copyright" section
+
 version 0.006; 2007-02-05
 
   * add the utc_day_to_mjdn() function, duplicated from Time::UTC,

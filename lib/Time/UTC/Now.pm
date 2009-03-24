@@ -54,14 +54,14 @@ package Time::UTC::Now;
 use warnings;
 use strict;
 
-use Data::Float 0.000 qw(significand_step mult_pow2);
-use Module::Runtime 0.001 qw(use_module);
+use Data::Float 0.008 qw(significand_step mult_pow2);
+use Module::Runtime 0.005 qw(use_module);
 use Time::Unix 1.02 ();
 use XSLoader;
 
-our $VERSION = "0.006";
+our $VERSION = "0.007";
 
-use base qw(Exporter);
+use parent "Exporter";
 our @EXPORT_OK = qw(
 	now_utc_rat now_utc_sna now_utc_flt
 	utc_day_to_mjdn utc_day_to_cjdn
@@ -73,7 +73,7 @@ XSLoader::load("Time::UTC::Now", $VERSION);
 
 =over
 
-=item now_utc_rat[(DEMAND_ACCURACY)]
+=item now_utc_rat([DEMAND_ACCURACY])
 
 Returns a list of three values.  The first two values identify a current
 UTC instant, in the form of a day number (number of days since the TAI
@@ -118,21 +118,19 @@ my $loaded_bigrat;
 
 sub now_utc_rat(;$) {
 	use integer;
-	my($dayno, $secs, $nsecs, $ubound) = _now_utc_internal($_[0]);
+	my($dayno, $secs, $nsecs, $bsecs, $bnsecs) = _now_utc_internal($_[0]);
 	unless($loaded_bigrat) {
 		use_module("Math::BigRat", "0.02");
 		$loaded_bigrat = 1;
 	}
 	return (Math::BigRat->new($dayno),
 		Math::BigRat->new(sprintf("%d.%09d", $secs, $nsecs)),
-		defined($ubound) ?
-			Math::BigRat->new(sprintf("%d.%06d",
-						  $ubound / 1000000,
-						  $ubound % 1000000)) :
-			undef);
+		defined($bsecs) ?
+			Math::BigRat->new(sprintf("%d.%09d", $bsecs, $bnsecs))
+			: undef);
 }
 
-=item now_utc_sna[(DEMAND_ACCURACY)]
+=item now_utc_sna([DEMAND_ACCURACY])
 
 This performs exactly the same operation as C<now_utc_rat>, but returns
 the results in a different form.  The day number is returned as a
@@ -161,16 +159,12 @@ return values.
 
 sub now_utc_sna(;$) {
 	use integer;
-	my($dayno, $secs, $nsecs, $ubound) = _now_utc_internal($_[0]);
+	my($dayno, $secs, $nsecs, $bsecs, $bnsecs) = _now_utc_internal($_[0]);
 	return ($dayno, [$secs, $nsecs, 0],
-		defined($ubound) ?
-			[ $ubound / 1000000,
-			  ($ubound % 1000000) * 1000,
-			  0 ] :
-			undef);
+		defined($bsecs) ? [ $bsecs, $bnsecs, 0 ] : undef);
 }
 
-=item now_utc_flt[(DEMAND_ACCURACY)]
+=item now_utc_flt([DEMAND_ACCURACY])
 
 This performs exactly the same operation as C<now_utc_rat>, but returns
 all the results as Perl numbers (the day number as an integer, with the
@@ -186,7 +180,7 @@ return values.
 =cut
 
 # The floating-point seconds value is inaccurate due to rounding for
-# binary representation.  (With the resolution currently possible (1 us),
+# binary representation.  (With the resolution currently possible (1 ns),
 # the conversion to IEEE 754 double doesn't actually lose information,
 # but the value still isn't converted exactly.)  Not trusting rounding
 # to be correct, allow for 1 ulp of additional error, for values on the
@@ -200,11 +194,12 @@ use constant ADDITIONAL_UNCERTAINTY =>
 		 mult_pow2(significand_step, +11);
 
 sub now_utc_flt(;$) {
-	my($dayno, $secs, $nsecs, $ubound) = _now_utc_internal($_[0]);
+	my($dayno, $secs, $nsecs, $bsecs, $bnsecs) = _now_utc_internal($_[0]);
 	return ($dayno,
 		$secs + $nsecs/1000000000.0,
-		defined($ubound) ? $ubound/1000000.0 + ADDITIONAL_UNCERTAINTY :
-			undef);
+		defined($bsecs) ?
+			$bsecs + $bnsecs/1000000000.0 + ADDITIONAL_UNCERTAINTY
+			: undef);
 }
 
 =item utc_day_to_mjdn(DAY)
@@ -252,22 +247,41 @@ best interface available when it runs.  It knows about the following:
 
 =item ntp_adjtime(), ntp_gettime()
 
-Designed for precision timekeeping, this interface gives some leap
-second indications and an inaccuracy bound on the time it returns.
-Both are faulty in their raw form, but they are corrected by this module.
-(Those interested in the gory details are invited to read the source.)
-Resolution 1 us, or on some systems 1 ns.
+These interfaces were devised for Unix systems using the Mills timekeeping
+model, which is intended for clocks that are synchronised via NTP
+(the Network Time Protocol).  The timekeeping model is detailed in
+L<ftp://ftp.udel.edu/pub/people/mills/memos/memo96b.ps>.
+
+These interfaces gives some leap second indications, and an inaccuracy
+bound on the time returned.  Both are faulty in their raw form, but they
+are corrected by this module.  (Those interested in the gory details are
+invited to read the source.)  Resolution 1 us, or on some systems 1 ns.
+
+=item GetSystemTimeAsFileTime()
+
+This is part of the Win32 API of Microsoft Windows.
+
+Misbehaves around leap seconds, and does not give an inaccuracy bound.
+Resolution of the interface is 100 ns.
 
 =item gettimeofday()
+
+This is a long-standing Unix interface, so named because it was the
+interface to the "time-of-day clock".
 
 Misbehaves around leap seconds, and does not give an inaccuracy bound.
 Resolution 1 us.
 
 =item Time::Unix::time()
 
+This is derived from the original Unix C<time()> function, which was
+also adopted by the C library standard and by Perl.  Various systems
+have different epochs and resolutions for the C<time()> function, so
+it is not usable by this module on its own.  The C<Time::Unix> module
+corrects for the varying epochs across OSes.
+
 Misbehaves around leap seconds, and does not give an inaccuracy bound.
-Resolution 1 s.  The C<Time::Unix> module corrects for the varying epochs
-of C<time()> across OSes; native C<time()> is not a suitable fallback.
+Resolution 1 s.
 
 =back
 
@@ -301,6 +315,15 @@ Uses ntp_adjtime(), which gives resolution 1 us and uncertainty bound.
 
 Uses ntp_gettime(), which gives resolution 1 us and uncertainty bound.
 
+=head2 Windows
+
+Experimental code (new in version 0.007) uses the native
+GetSystemTimeAsFileTime().  Observed clock resolution is 10 ms, but
+lower-order digits are supplied (filled with noise) down to the API
+resolution of 100 ns.  There is no uncertainty bound, and there are
+discontinuities at leap seconds.  There is no interface that supplies
+an uncertainty bound or correct leap second handling.
+
 =head1 SEE ALSO
 
 L<Time::TAI::Now>,
@@ -312,7 +335,9 @@ Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006, 2007 Andrew Main (Zefram) <zefram@fysh.org>
+Copyright (C) 2006, 2007, 2009 Andrew Main (Zefram) <zefram@fysh.org>
+
+=head1 LICENSE
 
 This module is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

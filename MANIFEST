@@ -1,12 +1,17 @@
 .cvsignore
+Build.PL
 Changes
 MANIFEST
 META.yml
 Makefile.PL
 README
-Now.xs
+lib/Time/UTC/.cvsignore
 lib/Time/UTC/Now.pm
-ppport.h
+lib/Time/UTC/Now.xs
+lib/Time/UTC/features.probe
 t/cjdn.t
 t/mjdn.t
+t/pod_cvg.t
+t/pod_syn.t
 t/use.t
+SIGNATURE    Added here by Module::Build

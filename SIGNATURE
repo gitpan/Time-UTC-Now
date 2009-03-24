@@ -1,0 +1,39 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.55.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 0927d823ba773fba58c57fa3862d80537f00261d .cvsignore
+SHA1 53a93d6d5f44b5d425e56394852a043a06fb476d Build.PL
+SHA1 cbdf80b7f46d0b02067d7131b2f3d46985f1459f Changes
+SHA1 e14ea49ced75c188734defcb4dd960ab23669fd7 MANIFEST
+SHA1 1adb6dbb106015c4f1e945558e7384a9bea373cc META.yml
+SHA1 684ab827ae5405876abe203f5a032ffa6b575cf7 Makefile.PL
+SHA1 2e73f76431b1d2787f42ca1420d3343609e4c52e README
+SHA1 929b02aae0ccd872a2213f864047891b17963f84 lib/Time/UTC/.cvsignore
+SHA1 cf060f4b1f08421cd27f436870c379a33e5d5780 lib/Time/UTC/Now.pm
+SHA1 47b5965fae130de9dedaf2532040ce9b824c0733 lib/Time/UTC/Now.xs
+SHA1 bdffe0ee03b13173ff9615c2d4f6008d8f4f3cab lib/Time/UTC/features.probe
+SHA1 17d9ceb8c72b5ac0e93577dcba072d3690df7373 t/cjdn.t
+SHA1 694b45831cee64e6057685e29a9476d0cd11b539 t/mjdn.t
+SHA1 0e141eecf3ca4903ef38d9413b5403a9ddb0392f t/pod_cvg.t
+SHA1 74a957cd8b93f25672ecc6aa578a671d084dd343 t/pod_syn.t
+SHA1 4024e346d5cd485c1298b57aa55865d2d0201953 t/use.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEARECAAYFAknJQJgACgkQOV9mt2VyAVH/jACggmvLAzc62tY+C+AS++STsqEM
+CswAn3Z4tyF/1bumbB48Gs0yP2cN8mn+
+=MDhG
+-----END PGP SIGNATURE-----
