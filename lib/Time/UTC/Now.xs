@@ -1,3 +1,4 @@
+#define PERL_NO_GET_CONTEXT 1
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
@@ -150,7 +151,9 @@
 #  define STA_NANO 0
 # endif
 
-static int try_ntpadjtime(int demanding_accuracy)
+# define try_ntpadjtime(demanding_accuracy) \
+	THX_try_ntpadjtime(aTHX_ demanding_accuracy)
+static int THX_try_ntpadjtime(pTHX_ int demanding_accuracy)
 {
 	dSP;
 	int state;
@@ -164,7 +167,9 @@ static int try_ntpadjtime(int demanding_accuracy)
 #  define NTV_SUBSEC NTPTIMEVAL_SUBSEC
 	struct timex txx;
 # endif /* !QHAVE_STRUCT_TIMEX_TIME */
-# if defined(QHAVE_STRUCT_TIMEX_TIME) ? defined(QHAVE_STRUCT_TIMEX_TIME_STATE) : defined(QHAVE_STRUCT_NTPTIMEVAL_TIME_STATE)
+# if defined(QHAVE_STRUCT_TIMEX_TIME) ? \
+	defined(QHAVE_STRUCT_TIMEX_TIME_STATE) : \
+	defined(QHAVE_STRUCT_NTPTIMEVAL_TIME_STATE)
 #  define leap_state ntv.time_state
 # else
 #  define leap_state state
@@ -333,7 +338,8 @@ static U16 div_u64_u16(U32 *hi_p, U32 *lo_p, U16 d)
 }
 # endif /* !(HAS_QUAD && UINT64_C) */
 
-static int try_getsystemtimeasfiletime(void)
+# define try_getsystemtimeasfiletime() THX_try_getsystemtimeasfiletime(aTHX)
+static int THX_try_getsystemtimeasfiletime(pTHX)
 {
 	dSP;
 	FILETIME fts;
@@ -389,7 +395,8 @@ static int try_getsystemtimeasfiletime(void)
 
 # include <sys/time.h>
 
-static int try_gettimeofday(void)
+# define try_gettimeofday() THX_try_gettimeofday(aTHX)
+static int THX_try_gettimeofday(pTHX)
 {
 	dSP;
 	struct timeval tv;
@@ -416,7 +423,8 @@ static int try_gettimeofday(void)
  * Time::Unix wrapper which exists to resolve this.
  */
 
-int try_timeunixtime(void)
+#define try_timeunixtime() THX_try_timeunixtime(aTHX)
+static int THX_try_timeunixtime(pTHX)
 {
 	dSP;
 	int state;

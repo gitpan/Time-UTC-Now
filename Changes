@@ -1,3 +1,24 @@
+version 0.008; 2010-10-20
+
+  * in XS, use PERL_NO_GET_CONTEXT for efficiency
+
+  * in XS, declare all local symbols static
+
+  * load some modules at build time instead of configure time, to avoid
+    dependency problems
+
+  * check for required Perl version at runtime
+
+  * use full stricture in test suite
+
+  * in Build.PL, explicitly declare configure-time requirements
+
+  * remove bogus "exit 0" from Build.PL
+
+  * slightly reformat some C code to avoid exceeding 80 columns
+
+  * add MYMETA.yml to .cvsignore
+
 version 0.007; 2009-03-24
 
   * bugfix: require bugfixed versions of Data::Float and Module::Runtime

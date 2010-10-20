@@ -1,3 +1,4 @@
+{ use 5.006; }
 use warnings;
 use strict;
 
@@ -8,8 +9,6 @@ Module::Build->subclass(code => q{
 		*cbuilder = sub { $_[0]->_cbuilder or die "no C support" };
 	}
 	sub compile_c {
-		use Data::Dumper qw(Dumper);
-		use IO::File;
 		my($self, $file, %args) = @_;
 		unless($args{no_feature_defs}) {
 			my $feat_file = $self->localize_file_path(
@@ -17,6 +16,8 @@ Module::Build->subclass(code => q{
 			my $probe_file = $self->localize_file_path(
 					"lib/Time/UTC/features.probe");
 			unless($self->up_to_date($probe_file, $feat_file)) {
+				require IO::File;
+				require Data::Dumper;
 				my $probe = do($probe_file) or
 					die $@ || "can't read $probe_file: $!";
 				my $feat_defs = $probe->($self);
@@ -24,7 +25,8 @@ Module::Build->subclass(code => q{
 				my $feat_fh = IO::File->new($feat_file, "w")
 					or die "can't write $feat_file: $!";
 				local $Data::Dumper::Terse = 1;
-				$feat_fh->printflush(Dumper($feat_defs))
+				$feat_fh->printflush(Data::Dumper::Dumper(
+							$feat_defs))
 					or die "can't write $feat_file: $!";
 			}
 			my $feat_defs = do($feat_file) or
@@ -41,6 +43,12 @@ Module::Build->subclass(code => q{
 })->new(
 	module_name => "Time::UTC::Now",
 	license => "perl",
+	configure_requires => {
+		"Module::Build" => 0,
+		"perl" => "5.006",
+		"strict" => 0,
+		"warnings" => 0,
+	},
 	build_requires => {
 		"Data::Dumper" => 0,
 		"ExtUtils::CBuilder" => "0.15",
@@ -71,4 +79,4 @@ Module::Build->subclass(code => q{
 	sign => 1,
 )->create_build_script;
 
-exit 0;
+1;

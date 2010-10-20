@@ -1,12 +1,33 @@
 ---
-name: Time-UTC-Now
-version: 0.007
+abstract: 'determine current time in UTC correctly'
 author:
   - 'Andrew Main (Zefram) <zefram@fysh.org>'
-abstract: determine current time in UTC correctly
+build_requires:
+  Data::Dumper: 0
+  ExtUtils::CBuilder: 0.15
+  IO::File: 0
+  Module::Build: 0
+  Test::More: 0
+  perl: 5.006
+  strict: 0
+  warnings: 0
+configure_requires:
+  Module::Build: 0
+  perl: 5.006
+  strict: 0
+  warnings: 0
+distribution_type: module
+dynamic_config: 1
+generated_by: 'Module::Build version 0.3607'
 license: perl
-resources:
-  license: http://dev.perl.org/licenses/
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Time-UTC-Now
+provides:
+  Time::UTC::Now:
+    file: lib/Time/UTC/Now.pm
+    version: 0.008
 requires:
   Data::Float: 0.008
   Exporter: 0
@@ -20,22 +41,6 @@ requires:
   perl: 5.006
   strict: 0
   warnings: 0
-build_requires:
-  Data::Dumper: 0
-  ExtUtils::CBuilder: 0.15
-  IO::File: 0
-  Module::Build: 0
-  Test::More: 0
-  perl: 5.006
-  strict: 0
-  warnings: 0
-dynamic_config: 1
-provides:
-  Time::UTC::Now:
-    file: lib/Time/UTC/Now.pm
-    version: 0.007
-generated_by: Module::Build version 0.31012
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
-distribution_type: module
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.008
