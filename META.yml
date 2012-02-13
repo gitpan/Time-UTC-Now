@@ -16,9 +16,8 @@ configure_requires:
   perl: 5.006
   strict: 0
   warnings: 0
-distribution_type: module
-dynamic_config: 1
-generated_by: 'Module::Build version 0.3607'
+dynamic_config: 0
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.112621'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -27,20 +26,17 @@ name: Time-UTC-Now
 provides:
   Time::UTC::Now:
     file: lib/Time/UTC/Now.pm
-    version: 0.008
+    version: 0.009
 requires:
-  Data::Float: 0.008
   Exporter: 0
-  Math::BigRat: 0.02
-  Module::Runtime: 0.005
+  Math::BigRat: 0.13
   Time::Unix: 1.02
   XSLoader: 0
   constant: 0
-  integer: 0
   parent: 0
   perl: 5.006
   strict: 0
   warnings: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.008
+version: 0.009

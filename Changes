@@ -1,3 +1,43 @@
+version 0.009; 2012-02-13
+
+  * bugfix: require bugfixed version of Math::BigRat (for construction
+    from decimal fraction strings)
+
+  * bugfix: when loading Math::BigRat, do it in a way that isn't
+    vulnerable to the bug in Perls prior to 5.12 regarding loading
+    context-sensitive modules
+
+  * bugfix: when calling Time::Unix::time(), don't be too picky about
+    the internal flags on its return value
+
+  * new now_utc_dec() function to return time in the decimal string form
+    processed by Math::Decimal
+
+  * refactor documentation for time determination functions
+
+  * test that now_*() functions return well-formed results
+
+  * test thread safety (except for thread cloning on Perl 5.6)
+
+  * new internal architecture to better handle multiple time acquisition
+    APIs
+
+  * perform transformations of time data into output formats in XS code
+
+  * new undocumented function to query all time acquisition APIs, for
+    porting and debugging
+
+  * in XS, declare "PROTOTYPES: DISABLE" to prevent automatic generation
+    of unintended prototypes
+
+  * correct dynamic_config setting to 0
+
+  * include META.json in distribution
+
+  * convert .cvsignore to .gitignore
+
+  * add MYMETA.json to .cvsignore
+
 version 0.008; 2010-10-20
 
   * in XS, use PERL_NO_GET_CONTEXT for efficiency

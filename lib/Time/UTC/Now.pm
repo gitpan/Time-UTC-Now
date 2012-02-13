@@ -4,7 +4,8 @@ Time::UTC::Now - determine current time in UTC correctly
 
 =head1 SYNOPSIS
 
-	use Time::UTC::Now qw(now_utc_rat now_utc_sna now_utc_flt);
+	use Time::UTC::Now
+		qw(now_utc_rat now_utc_sna now_utc_flt now_utc_dec);
 
 	($day, $secs, $bound) = now_utc_rat;
 	($day, $secs, $bound) = now_utc_rat(1);
@@ -12,6 +13,8 @@ Time::UTC::Now - determine current time in UTC correctly
 	($day, $secs, $bound) = now_utc_sna(1);
 	($day, $secs, $bound) = now_utc_flt;
 	($day, $secs, $bound) = now_utc_flt(1);
+	($day, $secs, $bound) = now_utc_dec;
+	($day, $secs, $bound) = now_utc_dec(1);
 
 	use Time::UTC::Now qw(utc_day_to_mjdn utc_day_to_cjdn);
 
@@ -55,38 +58,37 @@ package Time::UTC::Now;
 use warnings;
 use strict;
 
-use Data::Float 0.008 qw(significand_step mult_pow2);
-use Module::Runtime 0.005 qw(use_module);
-use Time::Unix 1.02 ();
-use XSLoader;
-
-our $VERSION = "0.008";
+our $VERSION = "0.009";
 
 use parent "Exporter";
 our @EXPORT_OK = qw(
-	now_utc_rat now_utc_sna now_utc_flt
+	now_utc_rat now_utc_sna now_utc_flt now_utc_dec
 	utc_day_to_mjdn utc_day_to_cjdn
 );
 
+require XSLoader;
 XSLoader::load("Time::UTC::Now", $VERSION);
 
 =head1 FUNCTIONS
 
-=over
+=head2 Time determination
 
-=item now_utc_rat([DEMAND_ACCURACY])
+Each of these functions determines the current UTC time and returns it.
+They vary in the form in which the time is returned.  In each case, the
+function returns a list of three values.  The first two values identify
+a current UTC instant, in the form of a day number (number of days since
+the TAI epoch) and a number of seconds since midnight within the day.
+The third value is an inaccuracy bound, as a number of seconds, or
+C<undef> if no accurate answer could be determined.
 
-Returns a list of three values.  The first two values identify a current
-UTC instant, in the form of a day number (number of days since the TAI
-epoch) and a number of seconds since midnight within the day.  The third
-value is an inaccuracy bound, as a number of seconds, or C<undef> if no
-accurate answer could be determined.
-
-If an inaccuracy bound is returned then this function is claiming to have
+If an inaccuracy bound is returned then the function is claiming to have
 answered correctly, to within the specified margin.  That is, some instant
-during the execution of C<now_utc_rat> is within the specified margin of
+during the execution of the function is within the specified margin of
 the instant identified.  (This semantic differs from older current-time
 interfaces that are content to return an instant that has already passed.)
+The inaccuracy bound describes the actual time represented in the return
+values, not some internal value that was rounded to generate the return
+values.
 
 The inaccuracy bound is measured in UTC seconds; that is, in SI seconds
 on the Terran geoid as realised by atomic clocks.  This differs from SI
@@ -94,53 +96,37 @@ seconds at the computer's location, but the difference is only apparent
 if the computer hardware is significantly time dilated with respect to
 the geoid.
 
-If C<undef> is returned instead of an inaccuracy bound then this function
-could not find a trustable answer.  Either the clock available was
-not properly synchronised or its accuracy could not be established.
-Whatever time could be found is returned, but this function makes
-no claim that it is accurate.  It should be treated with suspicion.
-In practice, clocks of this nature are especially likely to misbehave
-around leap seconds.
+If C<undef> is returned instead of an inaccuracy bound then the function
+could not find a trustable answer.  Either the clock available was not
+properly synchronised or its accuracy could not be established.  Whatever
+time could be found is returned, but the function makes no claim that it
+is accurate.  It should be treated with suspicion.  In practice, clocks
+of this nature are especially likely to misbehave around leap seconds.
 
-The function C<die>s if it could not find a plausible time at all.
-If DEMAND_ACCURACY is supplied and true then it will also die if it
-could not find an accurate answer, instead of returning with C<undef>
-for the inaccuracy bound.
+Each function will C<die> if it can't find a plausible time at all.
+If the I<DEMAND_ACCURACY> parameter is supplied and true then it will
+also die if it could not find an accurate answer, instead of returning
+with C<undef> for the inaccuracy bound.
+
+=over
+
+=item now_utc_rat([DEMAND_ACCURACY])
 
 All three return values are in the form of C<Math::BigRat> objects.
+
 This retains full resolution, is future-proof, and is easy to manipulate,
 but beware that C<Math::BigRat> is currently rather slow.  If performance
 is a problem then consider using one of the functions below that return
 the results in other formats.
 
-=cut
-
-my $loaded_bigrat;
-
-sub now_utc_rat(;$) {
-	use integer;
-	my($dayno, $secs, $nsecs, $bsecs, $bnsecs) = _now_utc_internal($_[0]);
-	unless($loaded_bigrat) {
-		use_module("Math::BigRat", "0.02");
-		$loaded_bigrat = 1;
-	}
-	return (Math::BigRat->new($dayno),
-		Math::BigRat->new(sprintf("%d.%09d", $secs, $nsecs)),
-		defined($bsecs) ?
-			Math::BigRat->new(sprintf("%d.%09d", $bsecs, $bnsecs))
-			: undef);
-}
-
 =item now_utc_sna([DEMAND_ACCURACY])
 
-This performs exactly the same operation as C<now_utc_rat>, but returns
-the results in a different form.  The day number is returned as a
-Perl integer.  The time since midnight and the inaccuracy bound (if
-present) are each returned in the form of a three-element array, giving
-a high-resolution fixed-point number of seconds.  The first element is
-the integral number of whole seconds, the second is an integral number
-of nanoseconds in the range [0, 1000000000), and the third is an integral
-number of attoseconds in the same range.
+The day number is returned as a Perl integer.  The time since midnight
+and the inaccuracy bound (if present) are each returned in the form of
+a three-element array, giving a high-resolution fixed-point number of
+seconds.  The first element is the integral number of whole seconds, the
+second is an integral number of nanoseconds in the range [0, 1000000000),
+and the third is an integral number of attoseconds in the same range.
 
 This form of return value is fairly efficient.  It is convenient for
 decimal output, but awkward to do arithmetic with.  Its resolution is
@@ -152,56 +138,33 @@ represent the day number fully; if not, 31 bits will overflow late in
 the sixth megayear of the Common Era.  (Average day length by then is
 projected to be around 86520 s, posing more serious problems for UTC.)
 
-The inaccuracy bound describes the actual time represented in the
-return values, not an internal value that was rounded to generate the
-return values.
-
-=cut
-
-sub now_utc_sna(;$) {
-	use integer;
-	my($dayno, $secs, $nsecs, $bsecs, $bnsecs) = _now_utc_internal($_[0]);
-	return ($dayno, [$secs, $nsecs, 0],
-		defined($bsecs) ? [ $bsecs, $bnsecs, 0 ] : undef);
-}
-
 =item now_utc_flt([DEMAND_ACCURACY])
 
-This performs exactly the same operation as C<now_utc_rat>, but returns
-all the results as Perl numbers (the day number as an integer, with the
-same caveat as for C<now_utc_sna>).  This form of return value is very
-efficient and easy to manipulate.  However, its resolution is limited,
-rendering it obsolete in the near future unless floating point number
-formats get bigger.
+All the results are returned as native Perl numbers.  The day number is
+returned as a Perl integer, with the same caveat as for C<now_utc_sna>.
+The other two items are floating point numbers.
 
-The inaccuracy bound describes the actual time represented in the
-return values, not an internal value that was rounded to generate the
-return values.
+This form of return value is very efficient and easy to manipulate.
+However, its resolution is limited, rendering it obsolete in the near
+future unless floating point number formats get bigger.
 
-=cut
+=item now_utc_dec([DEMAND_ACCURACY])
 
-# The floating-point seconds value is inaccurate due to rounding for
-# binary representation.  (With the resolution currently possible (1 ns),
-# the conversion to IEEE 754 double doesn't actually lose information,
-# but the value still isn't converted exactly.)  Not trusting rounding
-# to be correct, allow for 1 ulp of additional error, for values on the
-# order of 86400 (exponent +16).  This is added onto the uncertainty.
-#
-# Also add 1 ulp at 3600 (exponent +11) to cover rounding in conversion
-# of the uncertainty value itself.
+Each of the results is returned in the form of a string expressing a
+number as a decimal fraction.  These strings are of the type processed
+by L<Math::Decimal>, and are always returned in L<Math::Decimal>'s
+canonical form.
 
-use constant ADDITIONAL_UNCERTAINTY =>
-		 mult_pow2(significand_step, +16) +
-		 mult_pow2(significand_step, +11);
+This form of return value is fairly efficient and easy to manipulate.
+It is convenient both for decimal output and (via implicit coercion to
+floating point) for low-precision arithmetic.  L<Math::Decimal> can be
+used for high-precision arithmetic.  Its resolution is unlimited.
 
-sub now_utc_flt(;$) {
-	my($dayno, $secs, $nsecs, $bsecs, $bnsecs) = _now_utc_internal($_[0]);
-	return ($dayno,
-		$secs + $nsecs/1000000000.0,
-		defined($bsecs) ?
-			$bsecs + $bnsecs/1000000000.0 + ADDITIONAL_UNCERTAINTY
-			: undef);
-}
+=back
+
+=head2 Day count conversion
+
+=over
 
 =item utc_day_to_mjdn(DAY)
 
@@ -336,7 +299,7 @@ Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 COPYRIGHT
 
-Copyright (C) 2006, 2007, 2009, 2010
+Copyright (C) 2006, 2007, 2009, 2010, 2012
 Andrew Main (Zefram) <zefram@fysh.org>
 
 =head1 LICENSE

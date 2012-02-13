@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.66.
+signed via the Module::Signature module, version 0.68.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,26 +14,27 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 c2b7f89feca9ca545abff6ee8a31b2e87eb2550c .cvsignore
-SHA1 a2084bfc3f917704353a600d171b7894620cae28 Build.PL
-SHA1 3cac307b7544fbdf77b13ff47ea1ae41290a72ec Changes
-SHA1 e14ea49ced75c188734defcb4dd960ab23669fd7 MANIFEST
-SHA1 efb41a09d1f6a6023468ee756fc7d57790ba2950 META.yml
-SHA1 0f1b3b6269550b5135e10b3cae1b6b41d274b276 Makefile.PL
-SHA1 e98e87f72932df1a92011d2e29858ea9637c9934 README
-SHA1 929b02aae0ccd872a2213f864047891b17963f84 lib/Time/UTC/.cvsignore
-SHA1 a4458330ae7dff73a24ad97a21432b04c51576e0 lib/Time/UTC/Now.pm
-SHA1 112f6ca8941162cfa603f647208518d4c5aa3e0e lib/Time/UTC/Now.xs
+SHA1 50a33bc9a88c69555e5489fce1af57d941ace9bb .gitignore
+SHA1 c5cc3c6ffb73c8e2dc96d1cad626133c7f7de8a7 Build.PL
+SHA1 b2ae41a1ca0f3b34a3364cf8f53700dc3e1b820d Changes
+SHA1 67ac44de0d0552292d9ca9c62e19874b942d7949 MANIFEST
+SHA1 64ac9ad4704f3ae13ce180ab834b76b85ed42fef META.json
+SHA1 322de4d6d49e86a1e7fd1fad770120db2ef55601 META.yml
+SHA1 2157ae40589595d6cc1585fd7279b25bcf8f5852 Makefile.PL
+SHA1 3b1448faa08a1bea405521366d0dce485231211c README
+SHA1 2b67aac1f3d33afd98dddcffe29e9f9d63afce42 lib/Time/UTC/Now.pm
+SHA1 3078ed3a9d5840c222e316ae1a948ea1f9295485 lib/Time/UTC/Now.xs
 SHA1 bdffe0ee03b13173ff9615c2d4f6008d8f4f3cab lib/Time/UTC/features.probe
 SHA1 8fdbf9499577b02901b7199b7bacfc228cbaa934 t/cjdn.t
 SHA1 cb353ef1f99464fde1f41fabc856773f58473ff0 t/mjdn.t
+SHA1 3b45a4f835ac46476fe9082a62999f701753bb24 t/now.t
 SHA1 904d9a4f76525e2303e4b0c168c68230f223c8de t/pod_cvg.t
 SHA1 65c75abdef6f01a5d1588a307f2ddfe2333dc961 t/pod_syn.t
-SHA1 00ceaa7b7827efb45673f737a554dd9f02ce5f1a t/use.t
+SHA1 8945e55d78cc6d8e71bfef1ff2b1d6fcbd85cc29 t/threads.t
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
+Version: GnuPG v1.4.10 (GNU/Linux)
 
-iEYEARECAAYFAky/a2AACgkQOV9mt2VyAVE6ZQCfQabcxr1DFQyW8eHnoZtrkFzt
-0e0An2ORJy09teTAsBjt295OSNxvBN6j
-=K7aU
+iEYEARECAAYFAk85S24ACgkQOV9mt2VyAVGQugCfYxajKUPk6RBVRnvoW7MNptCh
+7FEAoJ3vamnjKN///jIk4Co1sc9+XEzl
+=MjQo
 -----END PGP SIGNATURE-----
