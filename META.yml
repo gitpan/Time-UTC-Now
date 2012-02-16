@@ -26,7 +26,7 @@ name: Time-UTC-Now
 provides:
   Time::UTC::Now:
     file: lib/Time/UTC/Now.pm
-    version: 0.009
+    version: 0.010
 requires:
   Exporter: 0
   Math::BigRat: 0.13
@@ -39,4 +39,4 @@ requires:
   warnings: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.009
+version: 0.010

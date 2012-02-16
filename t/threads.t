@@ -76,14 +76,15 @@ my $thread2 = threads->create(sub {
 $done2->down;
 ok $ok2;
 
-ok eval(q{ use Time::UTC::Now qw(now_utc_rat now_utc_sna now_utc_flt); 1; });
+ok eval(q{
+	use Time::UTC::Now
+		qw(now_utc_rat now_utc_sna now_utc_flt now_utc_dec);
+1; });
 
 my $ok3 :shared;
 my $thread3 = threads->create(sub {
 	my $ok = 1;
 	"$]" < 5.007002 or eval(q{
-		use Time::UTC::Now
-			qw(now_utc_rat now_utc_sna now_utc_flt now_utc_dec);
 		now_utc_rat();
 		now_utc_sna();
 		now_utc_flt();
@@ -101,8 +102,6 @@ my $ok4 :shared;
 my $thread4 = threads->create(sub {
 	my $ok = 1;
 	"$]" < 5.007002 or eval(q{
-		use Time::UTC::Now
-			qw(now_utc_rat now_utc_sna now_utc_flt now_utc_dec);
 		now_utc_rat();
 		now_utc_sna();
 		now_utc_flt();

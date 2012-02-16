@@ -51,7 +51,7 @@
    "provides" : {
       "Time::UTC::Now" : {
          "file" : "lib/Time/UTC/Now.pm",
-         "version" : "0.009"
+         "version" : "0.010"
       }
    },
    "release_status" : "stable",
@@ -60,5 +60,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.009"
+   "version" : "0.010"
 }

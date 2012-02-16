@@ -58,7 +58,7 @@ package Time::UTC::Now;
 use warnings;
 use strict;
 
-our $VERSION = "0.009";
+our $VERSION = "0.010";
 
 use parent "Exporter";
 our @EXPORT_OK = qw(
@@ -214,7 +214,7 @@ best interface available when it runs.  It knows about the following:
 These interfaces were devised for Unix systems using the Mills timekeeping
 model, which is intended for clocks that are synchronised via NTP
 (the Network Time Protocol).  The timekeeping model is detailed in
-L<ftp://ftp.udel.edu/pub/people/mills/memos/memo96b.ps>.
+L<http://www.eecis.udel.edu/~mills/database/memos/memo96b.ps>.
 
 These interfaces gives some leap second indications, and an inaccuracy
 bound on the time returned.  Both are faulty in their raw form, but they

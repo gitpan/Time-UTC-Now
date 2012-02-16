@@ -47,11 +47,15 @@
 #endif /* !START_MY_CXT */
 
 #ifndef MY_CXT_CLONE
-# define MY_CXT_CLONE \
+# ifdef PERL_IMPLICIT_CONTEXT
+#  define MY_CXT_CLONE \
 	dMY_CXT_SV; \
 	my_cxt_t *my_cxtp = (my_cxt_t*)SvPVX(newSV(sizeof(my_cxt_t)-1)); \
 	Copy(INT2PTR(my_cxt_t*, SvUV(my_cxt_sv)), my_cxtp, 1, my_cxt_t); \
 	sv_setuv(my_cxt_sv, PTR2UV(my_cxtp))
+# else /* !PERL_IMPLICIT_CONTEXT */
+#  define MY_CXT_CLONE NOOP
+# endif /* !PERL_IMPLICIT_CONTEXT */
 #endif /* !MY_CXT_CLONE */
 
 #define TAI_EPOCH_MJD 36204
@@ -205,8 +209,8 @@ struct mechanism {
  *
  * reference:
  * [KERN-MODEL] David L. Mills, "A Kernel Model for Precision
- * Timekeeping", 31 January 1996, <ftp://ftp.udel.edu/pub/people/
- * mills/memos/memo96b.ps>.
+ * Timekeeping", 31 January 1996, <http://www.eecis.udel.edu/~mills/
+ * database/memos/memo96b.ps>.
  */
 
 #ifdef QHAVE_NTP_ADJTIME

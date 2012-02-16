@@ -1,3 +1,11 @@
+version 0.010; 2012-02-16
+
+  * repair portability to pre-5.8.6 non-threading Perls
+
+  * in documentation and comment, update location of Mills paper
+
+  * tweak thread cloning test
+
 version 0.009; 2012-02-13
 
   * bugfix: require bugfixed version of Math::BigRat (for construction
